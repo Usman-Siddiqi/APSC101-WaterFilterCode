@@ -3,6 +3,7 @@
 // Define the pins the push buttons and limit switch are connected to
 #define pushButtonSlow A2
 #define pushButtonFast A3
+#define cfpump 53
 
 bool pushButtonStateSlow = HIGH;
 bool pushButtonStateFast = HIGH;
@@ -11,7 +12,6 @@ bool pushButtonStateFast = HIGH;
 AF_DCMotor DCmotor(2);
 AF_DCMotor pump(4);
 AF_DCMotor ppump(1);
-AF_DCMotor cfpump(3);
 
 void setup() {
   // Set up serial communication to print things to the serial monitors
@@ -22,11 +22,9 @@ void setup() {
   // Set the speed of the Pumps. The speed input can be 0-255.
   pump.setSpeed(255);
   ppump.setSpeed(255);
-  cfpump.setSpeed(255);
 
   // Start the pumps forward
   ppump.run(FORWARD);
-  cfpump.run(FORWARD);
   pump.run(FORWARD);
 
   // Configure the pins to to be input pins
@@ -42,13 +40,13 @@ void loop() {
   if (pushButtonStateSlow==LOW){
     pump.setSpeed(0);
     ppump.setSpeed(0);
-    cfpump.setSpeed(0);
+    digitalWrite(cfpump, LOW);
 
   }
   else if (pushButtonStateFast==LOW){
     pump.setSpeed(255);
     ppump.setSpeed(255);
-    cfpump.setSpeed(255);
+    digitalWrite(cfpump, HIGH);
   }
 
 
