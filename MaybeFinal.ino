@@ -42,7 +42,7 @@ void coagulation_to_clean(){
   DCmotor2.setSpeed(167);//Runs impeller
   digitalWrite(ppump, HIGH);//Moving the water for this task
 
-  int mixing_loops = 10;
+  int mixing_loops = 50;
   for(int i = 0; i < mixing_loops; i++){
       DCmotor1.run(FORWARD);
       delay(1000);
@@ -91,9 +91,7 @@ void loop() {
     slurry_to_coagulation();
     if(wait(3000))//30 second delay
       break;
-    coagulation();
-    if(wait(10000))//10,000 10 miliseconds, or 100 seconds
-      break;
+    coagulation();//Delays already in function so no need for delay in void loop
     coagulation_to_clean();
     if(wait(10))//30 second delay
       break;
