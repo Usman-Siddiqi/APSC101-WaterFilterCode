@@ -1,11 +1,15 @@
 #include <AFMotor.h>
 
 // Define the pins the push buttons and limit switch are connected to
+//cf pump is actually supposed to be d pump
 #define emergencyStopButton A2
 #define startButton A3
 #define startTurbiditySensor A0
 #define endTurbiditySensor A1
 #define ppump 53//Moves clean to clean tank
+
+#define fastSpeedImpeller 175
+#define slowSpeedImpeller 80
 
 // Connect the DC motor to M1 on the motor control board
 AF_DCMotor DCmotor1(2);//Runs threaded rod
@@ -13,7 +17,7 @@ AF_DCMotor DCmotor2(1);//Runs impeller
 AF_DCMotor pump(4);//Moves dirty to coagulation
 AF_DCMotor cfpump(3);//slurry to coagulation tank
 
-void dirty_to_coagulation(){
+/**void dirty_to_coagulation(){
   cfpump.setSpeed(0);
   pump.setSpeed(255);//Moving the water for this task
   DCmotor1.setSpeed(0);
@@ -24,6 +28,14 @@ void dirty_to_coagulation(){
 void slurry_to_coagulation(){
   cfpump.setSpeed(255);//Moving the water for this task
   pump.setSpeed(0);
+  DCmotor1.setSpeed(0);
+  DCmotor2.setSpeed(0);
+  digitalWrite(ppump, LOW);
+}*/
+
+void everything_to_coagulation(){
+  cfpump.setSpeed(255);//Moving the slurry
+  pump.setSpeed(255);//Moving the dirty water
   DCmotor1.setSpeed(0);
   DCmotor2.setSpeed(0);
   digitalWrite(ppump, LOW);
@@ -40,21 +52,21 @@ void coagulation_to_clean(){
 bool coagulation(){
   cfpump.setSpeed(0);
   pump.setSpeed(0);
-  DCmotor1.setSpeed(167);//Runs the mixing bar
-  DCmotor2.setSpeed(167);//Runs impeller
+  DCmotor1.setSpeed(0);//Runs the mixing bar
+  DCmotor2.setSpeed(fastSpeedImpeller);//Runs impeller
   digitalWrite(ppump, LOW);
 
   DCmotor1.run(FORWARD);
+  if(wait(1000))//10 secs
+    return true;
+  DCmotor2.setSpeed(slowSpeedImpeller);
+  if(wait(18000))//180 secs
+    return true;
+  DCmotor2.setSpeed(0);
+  DCmotor1.setSpeed(167);
   if(wait(100))
     return true;
-  for(int i = 0; i < 10; i++){
-    DCmotor2.setSpeed(200);
-    if(wait(100))
-      return true;
-    DCmotor2.setSpeed(167);
-    if(wait(100))
-      return true;
-  }
+
   return false;
 }
 
@@ -105,15 +117,12 @@ void setup() {
 }
 
 void loop() {
+  
   bool startButtonState = digitalRead(startButton);
   while(startButtonState){
     float initial_turbidity = read_turbidity(startTurbiditySensor);
 
-    dirty_to_coagulation();
-    if(wait(3000))//30 second delay
-      break;
-
-    slurry_to_coagulation();
+    everything_to_coagulation();
     if(wait(3000))//30 second delay
       break;
 
