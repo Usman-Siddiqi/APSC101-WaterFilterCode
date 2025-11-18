@@ -3,6 +3,8 @@
 // Define the pins the push buttons and limit switch are connected to
 #define emergencyStopButton A2
 #define startButton A3
+#define startTurbiditySensor A0
+#define endTurbiditySensor A1
 #define ppump 53//Moves clean to clean tank
 
 // Connect the DC motor to M1 on the motor control board
@@ -76,6 +78,13 @@ void stop_all(){
   digitalWrite(ppump, LOW);
 }
 
+void read_turbidity(int a_pin){
+  int sensor = analogRead(a_pin);// read the input on analog pin 0
+  float voltage = sensor * (5.0 / 1024.0); // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V)
+  Serial.println("Voltage: ");
+  Serial.println(voltage); 
+}
+
 void setup() {
   // Set up serial communication to print things to the serial monitors
   Serial.begin (9600);
@@ -100,6 +109,7 @@ void loop() {
   bool startButtonState = digitalRead(startButton);
   while(startButtonState){
     bool emergency = false;
+    read_turbidity(startTurbiditySensor);
     dirty_to_coagulation();
     if(wait(3000))//30 second delay
       break;
@@ -114,6 +124,7 @@ void loop() {
     coagulation_to_clean();
     if(wait(10))//30 second delay
       break;
+    read_turbidity(endTurbiditySensor);
   }
   stop_all();
 }
