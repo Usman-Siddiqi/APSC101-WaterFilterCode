@@ -123,7 +123,7 @@ void loop() {
       break;
 
     coagulation_to_clean();
-    if(wait(10))//30 second delay
+    if(wait(3000))//30 second delay
       break;
       
     float final_turbidity = read_turbidity(endTurbiditySensor);
