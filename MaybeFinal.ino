@@ -44,17 +44,16 @@ bool coagulation(){
   DCmotor2.setSpeed(167);//Runs impeller
   digitalWrite(ppump, LOW);
 
-  bool emergency = false;
-  int mixing_loops = 1;
-  for(int i = 0; i < mixing_loops; i++){
-      DCmotor1.run(FORWARD);
-      emergency = wait(100);//1 second delay
-      if(emergency)
-        return true;
-      DCmotor1.run(BACKWARD);
-      emergency = wait(100);//1 second delay
-      if(emergency)
-        return true;
+  DCmotor1.run(FORWARD);
+  if(wait(100))
+    return true;
+  for(int i = 0; i < 10; i++){
+    DCmotor2.setSpeed(200);
+    if(wait(100))
+      return true;
+    DCmotor2.setSpeed(167);
+    if(wait(100))
+      return true;
   }
   return false;
 }
@@ -108,22 +107,25 @@ void setup() {
 void loop() {
   bool startButtonState = digitalRead(startButton);
   while(startButtonState){
-    bool emergency = false;
     float initial_turbidity = read_turbidity(startTurbiditySensor);
+
     dirty_to_coagulation();
     if(wait(3000))//30 second delay
       break;
+
     slurry_to_coagulation();
     if(wait(3000))//30 second delay
       break;
-    emergency = coagulation();
-    if(emergency)
+
+    if(coagulation())
       break;
     if(wait(3000))//30 second delay
       break;
+
     coagulation_to_clean();
     if(wait(10))//30 second delay
       break;
+      
     float final_turbidity = read_turbidity(endTurbiditySensor);
     Serial.print("Voltage: ");
     Serial.println(initial_turbidity - final_turbidity);
