@@ -17,22 +17,6 @@ AF_DCMotor DCmotor2(1);//Runs impeller
 AF_DCMotor pump(4);//Moves dirty to coagulation
 AF_DCMotor cfpump(3);//slurry to coagulation tank
 
-/**void dirty_to_coagulation(){
-  cfpump.setSpeed(0);
-  pump.setSpeed(255);//Moving the water for this task
-  DCmotor1.setSpeed(0);
-  DCmotor2.setSpeed(0);
-  digitalWrite(ppump, LOW);
-}
-
-void slurry_to_coagulation(){
-  cfpump.setSpeed(255);//Moving the water for this task
-  pump.setSpeed(0);
-  DCmotor1.setSpeed(0);
-  DCmotor2.setSpeed(0);
-  digitalWrite(ppump, LOW);
-}*/
-
 void everything_to_coagulation(){
   cfpump.setSpeed(255);//Moving the slurry
   pump.setSpeed(255);//Moving the dirty water
@@ -73,7 +57,7 @@ bool coagulation(){
 bool wait(int time){//time is in 10 miliseconds. This waits and returns ture if emergency stop button is pressed
   for(int i = 0; i < time; i++){
     bool emergencyStopButtonState = digitalRead(emergencyStopButton);
-    if(emergencyStopButtonState)
+    if(emergencyStopButtonState == LOW)
       return true;
     
     delay(10);
@@ -94,6 +78,7 @@ float read_turbidity(int a_pin){
   float voltage = sensor * (5.0 / 1024.0); // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V)
   Serial.println("Voltage: ");
   Serial.println(voltage); 
+  return voltage;
 }
 
 void setup() {
@@ -119,7 +104,7 @@ void setup() {
 void loop() {
   
   bool startButtonState = digitalRead(startButton);
-  while(startButtonState){
+  while(startButtonState == LOW){
     float initial_turbidity = read_turbidity(startTurbiditySensor);
 
     everything_to_coagulation();
