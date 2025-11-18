@@ -46,11 +46,11 @@ bool coagulation(){
   int mixing_loops = 1;
   for(int i = 0; i < mixing_loops; i++){
       DCmotor1.run(FORWARD);
-      emergency = wait(100);//10 second delay
+      emergency = wait(100);//1 second delay
       if(emergency)
         return true;
       DCmotor1.run(BACKWARD);
-      emergency = wait(100);//10 second delay
+      emergency = wait(100);//1 second delay
       if(emergency)
         return true;
   }
