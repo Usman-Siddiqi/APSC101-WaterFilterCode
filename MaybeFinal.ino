@@ -1,12 +1,9 @@
 #include <AFMotor.h>
 
 // Define the pins the push buttons and limit switch are connected to
-#define pushButtonSlow A2
-#define pushButtonFast A3
+#define emergencyStopButton A2
+#define startButton A3
 #define ppump 53//Moves clean to clean tank
-
-bool pushButtonStateSlow = HIGH;
-bool pushButtonStateFast = HIGH;
 
 // Connect the DC motor to M1 on the motor control board
 AF_DCMotor DCmotor1(2);//Runs threaded rod
@@ -15,43 +12,90 @@ AF_DCMotor pump(4);//Moves dirty to coagulation
 AF_DCMotor cfpump(3);//slurry to coagulation tank
 
 void dirty_to_coagulation(){
-
+  cfpump.setSpeed(0);
+  pump.setSpeed(255);//Moving the water for this task
+  DCmotor1.setSpeed(0);
+  DCmotor2.setSpeed(0);
+  digitalWrite(ppump, LOW);
 }
 
 void slurry_to_coagulation(){
-
+  cfpump.setSpeed(255);//Moving the water for this task
+  pump.setSpeed(0);
+  DCmotor1.setSpeed(0);
+  DCmotor2.setSpeed(0);
+  digitalWrite(ppump, LOW);
 }
 
 void coagulation(){
-
+  cfpump.setSpeed(0);
+  pump.setSpeed(0);
+  DCmotor1.setSpeed(0);
+  DCmotor2.setSpeed(0);
+  digitalWrite(ppump, LOW);
 }
 
 void coagulation_to_clean(){
+  cfpump.setSpeed(0);
+  pump.setSpeed(0);
+  DCmotor1.setSpeed(167);//Runs the mixing bar
+  DCmotor2.setSpeed(167);//Runs impeller
+  digitalWrite(ppump, HIGH);//Moving the water for this task
 
+  int mixing_loops = 10;
+  for(int i = 0; i < mixing_loops; i++){
+      DCmotor1.run(FORWARD);
+      delay(1000);
+      DCmotor1.run(BACKWARD);
+      delay(1000);
+  }
+}
+
+bool wait(int time){//time is in 10 miliseconds. This waits and returns ture if emergency stop button is pressed
+  for(int i = 0; i < time; i++){
+    bool emergencyStopButtonState = digitalRead(emergencyStopButton);
+    if(emergencyStopButtonState)
+      return true;
+    
+    delay(10);
+  }
+  return false;
 }
 
 void setup() {
   // Set up serial communication to print things to the serial monitors
   Serial.begin (9600);
-  pinMode(pushButtonSlow, INPUT_PULLUP);
-  pinMode(pushButtonFast, INPUT_PULLUP);
+  pinMode(emergencyStopButton, INPUT_PULLUP);
+  pinMode(startButton, INPUT_PULLUP);
   pinMode(ppump, OUTPUT);
 
   pump.run(FORWARD);
   cfpump.run(FORWARD);
+  DCmotor1.run(FORWARD);
+  DCmotor2.run(FORWARD);
 
   // Set the speed of the Pumps. The speed input can be 0-255.
-  cfpump.setSpeed(255);
-  pump.setSpeed(255);
-  digitalWrite(ppump, HIGH);
+  cfpump.setSpeed(0);
+  pump.setSpeed(0);
+  DCmotor1.setSpeed(0);
+  DCmotor2.setSpeed(0);
+  digitalWrite(ppump, LOW);
 }
 
 void loop() {
-  dirty_to_coagulation();
-  delay(10*1000);
-  slurry_to_coagulation();
-  delay(10*1000);
-  coagulation();
-  delay(10*1000);
-  coagulation_to_clean();
+  bool startButtonState = digitalRead(startButton);
+  while(startButtonState){
+    dirty_to_coagulation();
+    if(wait(3000))//30 second delay
+      break;
+    slurry_to_coagulation();
+    if(wait(3000))//30 second delay
+      break;
+    coagulation();
+    if(wait(10000))//10,000 10 miliseconds, or 100 seconds
+      break;
+    coagulation_to_clean();
+    if(wait(10))//30 second delay
+      break;
+  }
 }
