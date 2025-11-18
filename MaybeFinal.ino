@@ -27,28 +27,34 @@ void slurry_to_coagulation(){
   digitalWrite(ppump, LOW);
 }
 
-void coagulation(){
+void coagulation_to_clean(){
   cfpump.setSpeed(0);
   pump.setSpeed(0);
   DCmotor1.setSpeed(0);
   DCmotor2.setSpeed(0);
-  digitalWrite(ppump, LOW);
+  digitalWrite(ppump, HIGH);//Moving the water for this task
 }
 
-void coagulation_to_clean(){
+bool coagulation(){
   cfpump.setSpeed(0);
   pump.setSpeed(0);
   DCmotor1.setSpeed(167);//Runs the mixing bar
   DCmotor2.setSpeed(167);//Runs impeller
-  digitalWrite(ppump, HIGH);//Moving the water for this task
+  digitalWrite(ppump, LOW);
 
+  bool emergency = false;
   int mixing_loops = 1;
   for(int i = 0; i < mixing_loops; i++){
       DCmotor1.run(FORWARD);
-      wait(100);
+      emergency = wait(100);//10 second delay
+      if(emergency)
+        return true;
       DCmotor1.run(BACKWARD);
-      wait(100);
+      emergency = wait(100);//10 second delay
+      if(emergency)
+        return true;
   }
+  return false;
 }
 
 bool wait(int time){//time is in 10 miliseconds. This waits and returns ture if emergency stop button is pressed
@@ -60,6 +66,14 @@ bool wait(int time){//time is in 10 miliseconds. This waits and returns ture if 
     delay(10);
   }
   return false;
+}
+
+void stop_all(){
+  cfpump.setSpeed(0);
+  pump.setSpeed(0);
+  DCmotor1.setSpeed(0);
+  DCmotor2.setSpeed(0);
+  digitalWrite(ppump, LOW);
 }
 
 void setup() {
@@ -85,17 +99,21 @@ void setup() {
 void loop() {
   bool startButtonState = digitalRead(startButton);
   while(startButtonState){
+    bool emergency = false;
     dirty_to_coagulation();
     if(wait(3000))//30 second delay
       break;
     slurry_to_coagulation();
     if(wait(3000))//30 second delay
       break;
-    coagulation();
+    emergency = coagulation();
+    if(emergency)
+      break;
     if(wait(3000))//30 second delay
       break;
     coagulation_to_clean();
     if(wait(10))//30 second delay
       break;
   }
+  stop_all();
 }
