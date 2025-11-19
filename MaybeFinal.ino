@@ -53,7 +53,7 @@ bool coagulation(){
   if(wait(9000))//90 second delay
       return true;  
   DCmotor1.setSpeed(250);
-  if(wait(160))
+  if(wait(180))
     return true;
   DCmotor1.setSpeed(0);
 
@@ -112,7 +112,8 @@ void loop() {
   
   bool startButtonState = digitalRead(startButton);
   while(startButtonState == LOW){
-    Serial.print("Initial ");
+    
+    Serial.print("Initial Velocity: ");
     float initial_turbidity = read_turbidity(startTurbiditySensor);
 
     everything_to_coagulation();
