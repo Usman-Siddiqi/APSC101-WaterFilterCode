@@ -8,8 +8,8 @@
 #define endTurbiditySensor A1
 #define ppump 53//Moves clean to clean tank
 
-#define fastSpeedImpeller 80
-#define slowSpeedImpeller 175
+#define fastSpeedImpeller 175
+#define slowSpeedImpeller 80
 
 // Connect the DC motor to M1 on the motor control board
 AF_DCMotor DCmotor1(2);//Runs threaded rod
@@ -36,19 +36,24 @@ void coagulation_to_clean(){
 bool coagulation(){
   cfpump.setSpeed(0);
   pump.setSpeed(0);
-  DCmotor1.setSpeed(0);//Runs the mixing bar
-  DCmotor2.setSpeed(fastSpeedImpeller);//Runs impeller
+  DCmotor1.setSpeed(0);//Runs the press
+  DCmotor2.setSpeed(slowSpeedImpeller);//Runs impeller
   digitalWrite(ppump, LOW);
 
   DCmotor1.run(BACKWARD);
-  if(wait(1000))//10 secs
+  if(wait(1800))//18 secs
+    return true;
+  DCmotor2.setSpeed(fastSpeedImpeller);
+  if(wait(1000))
     return true;
   DCmotor2.setSpeed(slowSpeedImpeller);
-  if(wait(1000))//180 secs
+  if(wait(9000))//90 secs //TODO MAKE IT 18000
     return true;
   DCmotor2.setSpeed(0);
-  DCmotor1.setSpeed(150);
-  if(wait(350))
+  if(wait(9000))//90 second delay
+      return true;  
+  DCmotor1.setSpeed(250);
+  if(wait(160))
     return true;
   DCmotor1.setSpeed(0);
 
@@ -58,6 +63,7 @@ bool coagulation(){
 bool wait(int time){//time is in 10 miliseconds. This waits and returns ture if emergency stop button is pressed
   for(int i = 0; i < time; i++){
     bool emergencyStopButtonState = digitalRead(emergencyStopButton);
+    Serial.println((float(time)-float(i))/100);
     if(emergencyStopButtonState == LOW)
       return true;
     
@@ -106,24 +112,26 @@ void loop() {
   
   bool startButtonState = digitalRead(startButton);
   while(startButtonState == LOW){
+    Serial.print("Initial ");
     float initial_turbidity = read_turbidity(startTurbiditySensor);
 
     everything_to_coagulation();
-    if(wait(3000))//30 second delay  TODO MAKE THIS 3000
+    if(wait(9000))//30 second delay  TODO MAKE THIS 9000
       break;
 
     if(coagulation())
       break;
-    if(wait(3000))//30 second delay
-      break;
 
     coagulation_to_clean();
-    if(wait(3000))//30 second delay
+    if(wait(4500))//30 second delay
       break;
       
+    Serial.print("Final ");
     float final_turbidity = read_turbidity(endTurbiditySensor);
-    Serial.print("Voltage: ");
+
+    Serial.print("Voltage Difference: ");
     Serial.println(initial_turbidity - final_turbidity);
   }
   stop_all();
+  startButtonState = digitalRead(startButton);
 }
