@@ -8,8 +8,8 @@
 #define endTurbiditySensor A1
 #define ppump 53//Moves clean to clean tank
 
-#define fastSpeedImpeller 175
-#define slowSpeedImpeller 80
+#define fastSpeedImpeller 80
+#define slowSpeedImpeller 175
 
 // Connect the DC motor to M1 on the motor control board
 AF_DCMotor DCmotor1(2);//Runs threaded rod
@@ -40,16 +40,17 @@ bool coagulation(){
   DCmotor2.setSpeed(fastSpeedImpeller);//Runs impeller
   digitalWrite(ppump, LOW);
 
-  DCmotor1.run(FORWARD);
+  DCmotor1.run(BACKWARD);
   if(wait(1000))//10 secs
     return true;
   DCmotor2.setSpeed(slowSpeedImpeller);
-  if(wait(18000))//180 secs
+  if(wait(1000))//180 secs
     return true;
   DCmotor2.setSpeed(0);
-  DCmotor1.setSpeed(167);
-  if(wait(100))
+  DCmotor1.setSpeed(150);
+  if(wait(350))
     return true;
+  DCmotor1.setSpeed(0);
 
   return false;
 }
@@ -90,7 +91,7 @@ void setup() {
 
   pump.run(FORWARD);
   cfpump.run(FORWARD);
-  DCmotor1.run(FORWARD);
+  DCmotor1.run(BACKWARD);
   DCmotor2.run(FORWARD);
 
   // Set the speed of the Pumps. The speed input can be 0-255.
@@ -108,7 +109,7 @@ void loop() {
     float initial_turbidity = read_turbidity(startTurbiditySensor);
 
     everything_to_coagulation();
-    if(wait(3000))//30 second delay
+    if(wait(3000))//30 second delay  TODO MAKE THIS 3000
       break;
 
     if(coagulation())
